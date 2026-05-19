@@ -219,6 +219,19 @@ maknumber/
 - [x] README 로컬 실행 + 배포 안내 채움 (`npx serve out` / Vercel / Netlify /
       GitHub Pages / S3 등).
 
+### Phase 5 — 출시 + 출시 후 폴리시 (2026-05-19 신규)
+- [x] **🚀 v1.0 출시** — https://maknumber.vercel.app (Vercel + GitHub).
+- [x] GitHub 저장소 public 전환 (보안 도구 신뢰성 ↑).
+- [x] MIT 라이선스 (`LICENSE` 파일 + README 명시).
+- [x] Open Graph + Twitter card 메타데이터 (`app/layout.tsx`).
+- [x] 커스텀 favicon (`app/icon.svg`, 자물쇠 SVG) — Next 기본 ICO 제거.
+- [x] `robots.ts` + `sitemap.ts` (정적 export 호환 `force-static`).
+- [x] 라이트모드 hue=250 슬레이트 톤으로 다크와 일관성.
+- [x] 슬로건 톤다운: `어차피 다시 안 갈 사이트` → `막 쓸 비밀번호, 편하게 막 만들어요`.
+- [x] **동적 OG 이미지** (`app/opengraph-image.tsx`, 1200×630 PNG, 빌드 시
+      생성) — Noto Sans KR 600/700/800 임베드로 한글 깨짐 방지.
+- [x] DangerWarning amber 톤 + `role="alert"`.
+
 ---
 
 ## ➡️ 다음 작업 우선순위
@@ -229,21 +242,22 @@ maknumber/
 1. Stage 1.x           ✅ 완료
 2. Phase 4 마감        ✅ 완료
 3. 출시                ✅ 완료 — https://maknumber.vercel.app
-4. 출시 후 폴리시       🚧 진행 중 (메타데이터·favicon·robots·라이센스·라이트 색감)
-5. (모니터링)          ── 사용자 피드백 수집 후 Stage 2(편집)/Stage 3(히스토리) 결정
+4. 출시 후 폴리시       ✅ 완료 (라이선스/favicon/robots/sitemap/OG 메타/OG 이미지/슬로건/라이트 톤/저장소 public 전환)
+5. (모니터링)          🚧 진행 중 — 사용자 피드백 수집 후 Stage 2/3 결정
 ```
 
-**1순위: 출시 후 모니터링**
+**1순위: 출시 후 모니터링 (행동 없는 단계)**
 
-- **친구·동료 공유 → 실사용 피드백 수집**. 다음 결정의 근거.
-- 피드백 받기 전까지 추가 기능 구현 보류. "1회용 도구"의 단순함 유지가
-  핵심 정체성.
-- 잠재 후속:
+- 코드/문서 변경 없음. **친구·동료에게 URL 공유하고 실사용 피드백 누적**.
+- 피드백이 모이기 전엔 추가 기능 보류. "1회용 도구"의 단순함 유지가 핵심
+  정체성.
+- 잠재 후속 — 피드백이 강하게 요구하면 그때:
   - Stage 2 (편집·실시간 평가, `lib/evaluator.ts` 분리) — 약 1일
   - Stage 3 (세션 히스토리, 메모리 only) — 약 1일
 - Vercel Production Checklist의 **Web Analytics / Speed Insights는 절대
   켜지 말 것** — 푸터의 "추적 없음" 약속 위반. `default-src 'self'` CSP
   단순성도 깨짐.
+- 다음 채팅에서 사용자가 새 작업을 가져오기 전까지 우리는 멈춤 상태.
 
 **주의:**
 - Next.js 16은 14/15와 breaking changes 있음. 새 API 쓰기 전에 AGENTS.md가
@@ -259,6 +273,44 @@ maknumber/
 ---
 
 ## 📝 Decision Log
+
+### 2026-05-19 — 슬로건 톤다운 + 동적 OG 이미지
+- **새 슬로건**: `막 쓸 비밀번호, 편하게 막 만들어요` (사용자 선택).
+  기존 `어차피 다시 안 갈 사이트, 막 쓸 비밀번호`가 약간 시니컬하게 느껴진다는
+  피드백을 반영. "막"이 두 번 반복되어 "막번호" 브랜드와 자연스럽게 연결되고
+  톤도 친근해짐. page 헤더 부제 / layout 메타 / README / SPEC 와이어프레임에
+  일괄 적용. CLAUDE.md 프로젝트 개요와 SPEC.md 사용자 시나리오 본문의
+  "어차피 다시 안 갈"은 컨셉 정의라 유지.
+- **동적 OG 이미지 채택**: `app/opengraph-image.tsx` + `next/og` 의
+  `ImageResponse` 사용. 빌드 시점에 1200×630 PNG가 정적 파일로 생성되어
+  `output: "export"` 와 충돌 없음(`force-static` 명시).
+- **한글 폰트 임베드**: `@fontsource/noto-sans-kr` devDependency 추가.
+  `node_modules/@fontsource/noto-sans-kr/files/` 에서 600/700/800 weight
+  `.woff` 를 `fs.readFile` 로 직접 임베드. 폰트 누락 시 한글이 □ 로 렌더되는
+  사태 방지. CDN/외부 fetch 없이 빌드 타임 로컬 파일.
+- **OG 이미지 디자인**: 다크 슬레이트 그라데이션 + 흰 카드 안 자물쇠 +
+  큼지막한 "막번호" + 슬로건 + 모노 비번 미리보기 `kX3$mP9aWq2!`. 한눈에
+  "비번 생성기"임을 알 수 있게.
+- **opengraph.xyz 진단의 "Title/Description 짧음"은 무시**: SEO 권고 50~60자
+  / 110~160자는 영어 기준. 한글은 글자당 정보 밀도가 2~3배라 현재 18자/59자도
+  충분. og:image 누락만 의미 있는 경고였고 이번에 해소.
+
+### 2026-05-19 — 출시 후 폴리시 묶음
+- **MIT 라이선스 채택**: 가장 단순한 오픈소스 라이선스, 보안 도구 코드를
+  누구나 검증·재사용 가능하게.
+- **GitHub 저장소 public 전환**: 보안 도구의 "서버 전송 없음·저장 없음"
+  주장을 코드 차원에서 검증 가능하게 함. 신뢰도 핵심. 환경변수/시크릿/개인
+  정보 0건이라 안전(`.env*`, `.claude/`, `.vercel` 등 모두 `.gitignore`).
+- **커스텀 favicon (`app/icon.svg`)**: Next.js 기본 ICO 대체. 검정 둥근 카드
+  + 흰색 자물쇠. Next App Router 가 자동으로 `<link rel="icon">` 헤더 생성.
+- **`robots.ts` + `sitemap.ts` 정적 export 호환 이슈**: Next 16에서 두
+  라우트는 기본 dynamic. `output: "export"` 와 빌드 충돌. `export const
+  dynamic = "force-static"` 명시로 해결. `lastModified` 도 빌드 시점 정적
+  문자열(`"2026-05-19"`) 사용.
+- **라이트모드도 hue=250 슬레이트 톤**: 다크 모드만 살짝 푸른빛이고 라이트는
+  순수 무채색이던 비대칭 해소. 두 모드 모두 일관된 보안 도구 톤.
+- **DangerWarning red → amber 전환 + `role="alert"`**: 강도 게이지의
+  빨강(score=0)과 시각 충돌 방지. 접근성에서도 동적 경고 영역 명시.
 
 ### 2026-05-19 — 🚀 v1.0 출시 (Vercel + GitHub)
 - **라이브 URL**: https://maknumber.vercel.app (HTTPS 자동, 전 세계 CDN).
