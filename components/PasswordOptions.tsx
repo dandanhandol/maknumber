@@ -3,6 +3,7 @@
 // 옵션 입력 폼. 길이, 카테고리 4종, 특수문자 모드(2종), 혼동 제외.
 // SPEC.md §2 참조. 정규화(normalizeOptions)는 부모(page)가 책임진다.
 
+import { useEffect, useState, type ChangeEvent } from "react";
 import type { PasswordOptions, SymbolMode } from "@/types/options";
 import { MAX_LENGTH, MIN_LENGTH } from "@/types/options";
 import { SYMBOL_POOLS } from "@/lib/generator";
@@ -33,6 +34,41 @@ export function PasswordOptionsForm({ opts, onChange }: Props) {
   const update = (patch: Partial<PasswordOptions>) =>
     onChange({ ...opts, ...patch });
 
+  // 길이 입력은 타이핑 중 빈 문자열을 허용해야 하므로 별도 state 로 관리.
+  // 검증/보정은 onBlur 시점에만 수행한다 — eager validation 시 모바일에서
+  // Backspace 로 지우자마자 MIN_LENGTH 로 보정되어 새 숫자를 못 치는 문제 방지.
+  const [lengthInput, setLengthInput] = useState<string>(String(opts.length));
+
+  // 외부에서 opts.length 가 바뀌면(프리셋 클릭, 슬라이더 드래그) input 동기화.
+  // mount 외엔 외부 상태 → 내부 입력 동기화이므로 set-state-in-effect 룰 disable.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLengthInput(String(opts.length));
+  }, [opts.length]);
+
+  const handleLengthChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    // 숫자만 허용 + 빈 값 허용. 그 외 키입력은 무시.
+    if (v !== "" && !/^\d+$/.test(v)) return;
+    setLengthInput(v);
+    // 유효 범위 안의 숫자라면 즉시 상위에 반영(슬라이더·비번 동기 갱신).
+    const n = parseInt(v, 10);
+    if (!Number.isNaN(n) && n >= MIN_LENGTH && n <= MAX_LENGTH) {
+      update({ length: n });
+    }
+  };
+
+  const handleLengthBlur = () => {
+    const n = parseInt(lengthInput, 10);
+    let normalized: number;
+    if (Number.isNaN(n)) normalized = opts.length; // 빈 값 → 마지막 유효 값
+    else if (n < MIN_LENGTH) normalized = MIN_LENGTH;
+    else if (n > MAX_LENGTH) normalized = MAX_LENGTH;
+    else normalized = n;
+    setLengthInput(String(normalized));
+    if (normalized !== opts.length) update({ length: normalized });
+  };
+
   const symbolsActive = opts.symbols && opts.symbolMode !== "off";
   const previewMode: Exclude<SymbolMode, "off"> =
     opts.symbolMode === "off" ? "safe" : opts.symbolMode;
@@ -43,13 +79,15 @@ export function PasswordOptionsForm({ opts, onChange }: Props) {
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium">길이</span>
           <Input
-            type="number"
-            value={opts.length}
-            onChange={(e) =>
-              update({ length: Number(e.target.value) || MIN_LENGTH })
-            }
-            min={MIN_LENGTH}
-            max={MAX_LENGTH}
+            // type="number" 는 모바일에서 빈 값 처리/스피너 등이 거슬려
+            // text + inputMode=numeric 으로 숫자 키패드만 띄움.
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={lengthInput}
+            onChange={handleLengthChange}
+            onBlur={handleLengthBlur}
+            aria-label={`길이 (${MIN_LENGTH}~${MAX_LENGTH})`}
             className="w-20 h-8 text-right tabular-nums"
           />
         </div>

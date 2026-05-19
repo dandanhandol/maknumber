@@ -274,6 +274,40 @@ maknumber/
 
 ## 📝 Decision Log
 
+### 2026-05-19 — 🐛 모바일 실기기 버그 2종 수정
+사용자가 라이브 환경에서 추가로 발견한 2개 버그를 정리·수정.
+
+**버그 1 — 길이 input eager validation**
+- 증상: 모바일에서 Backspace 로 input 을 지우면 즉시 `MIN_LENGTH(4)` 로
+  보정되어 새 숫자 키입력이 사실상 불가. 슬라이더로만 조정 가능했음.
+- 원인: `onChange` 시점에 `Number(e.target.value) || MIN_LENGTH` 로 즉시
+  변환. 빈 문자열은 `0 → MIN_LENGTH` 로 강제됨.
+- 수정 (PasswordOptions.tsx):
+  1. `lengthInput` 별도 state 도입(빈 문자열 허용).
+  2. `onChange` 에선 숫자/빈 값만 받고 그대로 보관. **유효 범위 안의 숫자만**
+     즉시 상위 `onChange(opts)` 호출해 슬라이더/비번 동기화. 범위 밖은
+     보관만 하고 상위 미반영.
+  3. `onBlur` 시점에 최종 검증·보정(빈 값 → 직전 유효 값, 범위 초과 →
+     클램프).
+  4. `useEffect` 로 외부에서 `opts.length` 가 바뀌면(프리셋·슬라이더)
+     `lengthInput` 동기화(set-state-in-effect 룰은 정당 사유로 disable).
+  5. `type="number"` → `type="text" inputMode="numeric" pattern="[0-9]*"`.
+     모바일 숫자 키패드는 유지하면서 스피너/eager 동작 회피.
+
+**버그 2 — 슬라이더 핸들 터치 영역 부족**
+- 증상: 핸들이 `size-3`(12px) 라 손가락으로 잡기 어려움. Apple HIG 권장
+  44pt 미달.
+- 수정 (components/ui/slider.tsx):
+  1. Tailwind v4 의 `pointer-coarse:` modifier 로 터치 디바이스만 분기.
+  2. Thumb 시각 크기: `size-3` (데스크톱) → `pointer-coarse:size-7` (28px).
+  3. Thumb hit area: `after:-inset-2` → `pointer-coarse:after:-inset-3`
+     (52×52px 터치 타깃, HIG 44pt 초과 충족).
+  4. Track 두께: `h-1` (4px) → `pointer-coarse:data-horizontal:h-1.5` (6px).
+  5. Control 세로 패딩: 터치에서만 `py-3` 추가 — 슬라이더 전체 영역
+     히트도 확장.
+  6. 핸들 그림자: `pointer-coarse:shadow-md` 로 모바일에서만 살짝 도드라짐.
+- 데스크톱 마우스에는 영향 없음. 키보드 화살표 접근성은 base-ui 기본 지원.
+
 ### 2026-05-19 — ⚡ 6 결정: zxcvbn 시나리오 그대로 (A안)
 - **결정**: `offline_slow_hashing_1e4_per_second` 시나리오 유지. 코드 변경 없음.
 - **사유**:
