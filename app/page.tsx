@@ -75,16 +75,16 @@ export default function Home() {
   };
 
   return (
-    <main className="container mx-auto max-w-2xl px-4 py-10 sm:py-14 space-y-7">
-      <header className="flex items-center gap-3 pb-1">
-        <div className="size-10 rounded-xl bg-foreground text-background flex items-center justify-center shadow-sm shrink-0">
-          <Lock className="size-5" strokeWidth={2.25} />
+    <main className="container mx-auto max-w-2xl px-4 py-6 sm:py-14 space-y-5 sm:space-y-7">
+      <header className="flex items-center gap-2.5 sm:gap-3 pb-1">
+        <div className="size-9 sm:size-10 rounded-xl bg-foreground text-background flex items-center justify-center shadow-sm shrink-0">
+          <Lock className="size-[18px] sm:size-5" strokeWidth={2.25} />
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold tracking-tight leading-none">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight leading-none">
             막번호
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-1">
             막 쓸 비밀번호, 편하게 막 만들어요
           </p>
         </div>

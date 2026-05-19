@@ -40,11 +40,8 @@ export function PasswordOutput({ pwd, onRegenerate }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl border-2 bg-card p-7 sm:p-9 shadow-sm">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-3">
-          생성된 비밀번호
-        </div>
-        <div className="font-mono text-4xl sm:text-5xl break-all leading-[1.15] font-semibold min-h-[3rem] tracking-tight">
+      <div className="rounded-2xl border-2 bg-card px-5 py-6 sm:p-9 shadow-sm">
+        <div className="font-mono text-3xl sm:text-5xl break-all leading-[1.15] font-semibold min-h-[2.25rem] sm:min-h-[3rem] tracking-tight">
           {pwd || (
             <span className="text-muted-foreground text-base font-sans font-normal">
               생성 중…

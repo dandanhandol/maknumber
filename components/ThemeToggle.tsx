@@ -37,7 +37,8 @@ export function ThemeToggle() {
       size="icon"
       onClick={toggle}
       aria-label={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
-      className="size-9 rounded-full"
+      // Apple HIG 최소 터치 타깃 44×44pt 충족(size-11 = 2.75rem = 44px).
+      className="size-11 rounded-full"
     >
       {/* SSR/hydration 미일치를 피하기 위해 mount 전에는 두 아이콘 모두 숨김. */}
       {mounted ? (
