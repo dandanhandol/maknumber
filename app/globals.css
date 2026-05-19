@@ -53,24 +53,26 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* 라이트모드도 다크모드와 일관되게 hue=250(슬레이트) 미세 채도 추가.
+     배경/카드는 거의 화이트지만 무채색이 아닌 살짝 시원한 톤으로 일관성 유지. */
+  --background: oklch(0.995 0.003 250);
+  --foreground: oklch(0.18 0.012 250);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.18 0.012 250);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.18 0.012 250);
+  --primary: oklch(0.225 0.015 250);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.965 0.005 250);
+  --secondary-foreground: oklch(0.225 0.015 250);
+  --muted: oklch(0.965 0.005 250);
+  --muted-foreground: oklch(0.55 0.012 250);
+  --accent: oklch(0.965 0.005 250);
+  --accent-foreground: oklch(0.225 0.015 250);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.918 0.008 250);
+  --input: oklch(0.918 0.008 250);
+  --ring: oklch(0.7 0.012 250);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

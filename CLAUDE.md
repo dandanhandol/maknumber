@@ -223,29 +223,27 @@ maknumber/
 
 ## ➡️ 다음 작업 우선순위
 
-**전체 로드맵 (2026-05-19 갱신, Decision Log 참조):**
+**전체 로드맵 (2026-05-19 출시 후 갱신):**
 
 ```
-1. Stage 1.3, 1.4   ✅ 완료
-2. Phase 4 마감     ✅ 완료 (반응형 / 접근성 / 네트워크 0건 / 정적 export)
-3. 출시 준비        🚧 진행 중 (라이브 검증, 도메인/호스팅 선택)
-4. (출시 후)        ── 사용자 피드백 보고 Stage 2(편집), Stage 3(히스토리) 결정
+1. Stage 1.x           ✅ 완료
+2. Phase 4 마감        ✅ 완료
+3. 출시                ✅ 완료 — https://maknumber.vercel.app
+4. 출시 후 폴리시       🚧 진행 중 (메타데이터·favicon·robots·라이센스·라이트 색감)
+5. (모니터링)          ── 사용자 피드백 수집 후 Stage 2(편집)/Stage 3(히스토리) 결정
 ```
 
-**1순위: 출시 — 라이브 검증 + 배포**
+**1순위: 출시 후 모니터링**
 
-다음 채팅에서:
-
-1. **라이브 미리보기** — 빌드된 정적 파일을 로컬에서 동작 검증:
-   ```bash
-   npm run build
-   npx serve out
-   ```
-   브라우저 DevTools Network 탭에서 외부 도메인 요청 0건 직접 확인.
-2. **호스팅 선택** — Vercel(가장 쉬움) / Netlify / GitHub Pages / 자체 S3.
-3. **도메인 결정** — 사용자가 따로 가지고 있다면 연결.
-4. **출시 후 실사용 모니터링** — 피드백 받아 Stage 2(편집) / Stage 3(히스토리)
-   진행 여부 결정.
+- **친구·동료 공유 → 실사용 피드백 수집**. 다음 결정의 근거.
+- 피드백 받기 전까지 추가 기능 구현 보류. "1회용 도구"의 단순함 유지가
+  핵심 정체성.
+- 잠재 후속:
+  - Stage 2 (편집·실시간 평가, `lib/evaluator.ts` 분리) — 약 1일
+  - Stage 3 (세션 히스토리, 메모리 only) — 약 1일
+- Vercel Production Checklist의 **Web Analytics / Speed Insights는 절대
+  켜지 말 것** — 푸터의 "추적 없음" 약속 위반. `default-src 'self'` CSP
+  단순성도 깨짐.
 
 **주의:**
 - Next.js 16은 14/15와 breaking changes 있음. 새 API 쓰기 전에 AGENTS.md가
@@ -261,6 +259,19 @@ maknumber/
 ---
 
 ## 📝 Decision Log
+
+### 2026-05-19 — 🚀 v1.0 출시 (Vercel + GitHub)
+- **라이브 URL**: https://maknumber.vercel.app (HTTPS 자동, 전 세계 CDN).
+- **소스 저장소**: https://github.com/dandanhandol/maknumber (현재 private,
+  공개 전환은 별도 결정).
+- **첫 커밋**: `6646f05` "Initial commit: 막번호 v1.0" — 40 파일,
+  12,780 insertions.
+- **자동 배포 흐름 확립**: `main` 브랜치 push → Vercel 자동 빌드·배포.
+- **외부 검증 통과**: HTTP 200, HSTS 보안 헤더 자동, 응답 32KB, 한국어 UI
+  14개 키워드 모두 SSR, 외부 도메인 참조 0건(vercel.app·w3.org 제외).
+- **Vercel Web Analytics / Speed Insights 비활성화 유지**: 푸터의 "추적
+  없음" 약속과 충돌. Production Checklist 권유에도 켜지 않음.
+- **개발 기간**: 2026-05-18 ~ 2026-05-19 (2일, 문서→코드→출시 전 과정).
 
 ### 2026-05-19 — Phase 4 마감 + 정적 export 채택
 - **`next.config.ts` 에 `output: "export"` 채택**. 막번호는 100% 클라이언트

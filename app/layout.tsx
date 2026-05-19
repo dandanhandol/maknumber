@@ -12,10 +12,39 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = "https://maknumber.vercel.app";
+const SITE_TITLE = "막번호 — 1회용 비밀번호 생성기";
+const SITE_DESCRIPTION =
+  "어차피 다시 안 갈 사이트, 막 쓸 비밀번호를 즉석에서. 100% 클라이언트, 서버 전송·저장·추적 없음.";
+
 export const metadata: Metadata = {
-  title: "막번호 — 1회용 비밀번호 생성기",
-  description:
-    "어차피 다시 안 갈 사이트, 막 쓸 비밀번호를 즉석에서. 100% 클라이언트, 서버 전송·저장 없음.",
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  applicationName: "막번호",
+  keywords: [
+    "비밀번호 생성기",
+    "막번호",
+    "1회용 비밀번호",
+    "랜덤 비밀번호",
+    "password generator",
+    "강력한 비밀번호",
+  ],
+  authors: [{ name: "dandanhandol" }],
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: "막번호",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    locale: "ko_KR",
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
