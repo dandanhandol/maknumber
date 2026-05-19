@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 const SITE_URL = "https://maknumber.vercel.app";
 const SITE_TITLE = "막번호 — 1회용 비밀번호 생성기";
 const SITE_DESCRIPTION =
-  "어차피 다시 안 갈 사이트, 막 쓸 비밀번호를 즉석에서. 100% 클라이언트, 서버 전송·저장·추적 없음.";
+  "막 쓸 비밀번호, 편하게 막 만들어요. 100% 클라이언트, 서버 전송·저장·추적 없음.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

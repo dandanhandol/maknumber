@@ -85,7 +85,7 @@ export default function Home() {
             막번호
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            어차피 다시 안 갈 사이트, 막 쓸 비밀번호
+            막 쓸 비밀번호, 편하게 막 만들어요
           </p>
         </div>
         <ThemeToggle />
