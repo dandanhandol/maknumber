@@ -3,9 +3,9 @@
 // 막번호 메인 페이지. 모든 상태는 메모리(React state)에만 둔다.
 // 영구 저장소 사용 금지(CLAUDE.md §🔒).
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Lock, ShieldCheck } from "lucide-react";
-import type { PasswordOptions, Strength } from "@/types/options";
+import type { PasswordEntry, PasswordOptions, Strength } from "@/types/options";
 import { MIN_LENGTH } from "@/types/options";
 import { DEFAULT_PRESET_ID, getPreset } from "@/lib/presets";
 import { generate, normalizeOptions } from "@/lib/generator";
@@ -13,11 +13,20 @@ import {
   getDangerMatches,
   getStrength,
 } from "@/lib/evaluator";
+import {
+  clearNonFavorite,
+  createEntry,
+  prependEntry,
+  removeEntry,
+  toggleFavorite,
+  updateScore,
+} from "@/lib/history";
 import { PresetSelector } from "@/components/PresetSelector";
 import { PasswordOptionsForm } from "@/components/PasswordOptions";
 import { PasswordOutput } from "@/components/PasswordOutput";
 import { StrengthMeter } from "@/components/StrengthMeter";
 import { DangerWarning } from "@/components/DangerWarning";
+import { HistoryList } from "@/components/HistoryList";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const INITIAL_OPTIONS = getPreset(DEFAULT_PRESET_ID)!.options;
@@ -37,6 +46,17 @@ export default function Home() {
   // draft 는 편집 중 문자열, originalBeforeEdit 은 "되돌리기" 용.
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string>("");
+
+  // 세션 히스토리 — Stage 3 (2026-05-20). 메모리 only, 최대 20개.
+  const [history, setHistory] = useState<PasswordEntry[]>([]);
+  // 현재 메인 비번이 history 의 어느 항목인지 추적(카드 강조용).
+  const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
+  // 표시용 # 번호. 삭제해도 줄어들지 않는 단조 증가 카운터.
+  const indexRef = useRef(0);
+  // 다음 history 추가가 "편집됨" 항목인지 표시 (handleEditCommit 직후 set).
+  const nextEditedRef = useRef(false);
+  // 카드 클릭으로 메인을 swap 한 직후엔 history 자동 추가를 건너뛴다.
+  const skipNextHistoryRef = useRef(false);
 
   // 평가 대상: 편집 중에는 draft, 아니면 pwd. 편집/되돌리기 사이의 자연스러운
   // 전환을 위해 단일 변수로 통일.
@@ -87,6 +107,38 @@ export default function Home() {
     return () => clearTimeout(handle);
   }, [evalTarget]);
 
+  // pwd 가 안정된 후(300ms 디바운스) 히스토리에 자동 추가. 슬라이더 드래그
+  // 중 매 키프레임마다 추가되어 폭주하는 것을 막는다.
+  // 카드 클릭으로 swap 한 직후엔 skipNextHistoryRef 로 건너뜀.
+  useEffect(() => {
+    if (!pwd) return;
+    if (skipNextHistoryRef.current) {
+      skipNextHistoryRef.current = false;
+      return;
+    }
+    const handle = setTimeout(() => {
+      setHistory((h) => {
+        // 가장 최신 항목과 동일하면 중복 추가 방지.
+        if (h.length > 0 && h[0].value === pwd) return h;
+        const isEdited = nextEditedRef.current;
+        nextEditedRef.current = false;
+        indexRef.current += 1;
+        const entry = createEntry({
+          value: pwd,
+          index: indexRef.current,
+          isEdited,
+        });
+        // 강도 측정은 entry 추가 직후 비동기로 score 채움.
+        getStrength(pwd).then((s) => {
+          setHistory((prev) => updateScore(prev, entry.id, s.score));
+        });
+        setCurrentEntryId(entry.id);
+        return prependEntry(h, entry);
+      });
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [pwd]);
+
   const handlePreset = (id: string) => {
     const p = getPreset(id);
     if (!p) return;
@@ -113,6 +165,8 @@ export default function Home() {
 
   const handleEditCommit = useCallback(() => {
     if (Array.from(draft).length < MIN_LENGTH) return; // 안전망
+    // 다음 history 자동 추가 시 isEdited=true 표시.
+    nextEditedRef.current = true;
     setPwd(draft);
     setEditing(false);
     // 편집된 비번은 어떤 프리셋과도 매칭되지 않으므로 강조 해제.
@@ -135,6 +189,55 @@ export default function Home() {
     }
     setPwd(generate(opts));
   }, [editing, opts]);
+
+  // ─── 히스토리 핸들러 ─────────────────────────────────────────────
+  const handleHistorySelect = useCallback(
+    (id: string) => {
+      const entry = history.find((e) => e.id === id);
+      if (!entry) return;
+      // 편집 중에 카드를 누르면 편집 내용 폐기. 의도 명확하다고 가정.
+      if (editing) {
+        setEditing(false);
+        setDraft("");
+      }
+      // history 자동 추가 effect 가 다시 트리거되는 것을 방지.
+      skipNextHistoryRef.current = true;
+      setPwd(entry.value);
+      setCurrentEntryId(entry.id);
+      // 선택된 비번은 어떤 프리셋과도 매칭이 보장되지 않으므로 강조 해제.
+      setPresetId(null);
+    },
+    [history, editing],
+  );
+
+  const handleHistoryToggleFavorite = useCallback((id: string) => {
+    setHistory((h) => toggleFavorite(h, id));
+  }, []);
+
+  const handleHistoryRemove = useCallback(
+    (id: string) => {
+      setHistory((h) => removeEntry(h, id));
+      if (currentEntryId === id) setCurrentEntryId(null);
+    },
+    [currentEntryId],
+  );
+
+  const handleHistoryClearAll = useCallback(() => {
+    const hasNonFav = history.some((e) => !e.isFavorite);
+    if (!hasNonFav) return;
+    const ok = window.confirm(
+      "즐겨찾기를 제외한 모든 비밀번호를 지웁니다. 계속할까요?",
+    );
+    if (!ok) return;
+    setHistory((h) => {
+      const next = clearNonFavorite(h);
+      // 현재 메인이 비-즐겨찾기로 사라지면 강조 dangling.
+      if (currentEntryId && !next.some((e) => e.id === currentEntryId)) {
+        setCurrentEntryId(null);
+      }
+      return next;
+    });
+  }, [history, currentEntryId]);
 
   return (
     <main className="container mx-auto max-w-2xl px-4 py-6 sm:py-14 space-y-5 sm:space-y-7">
@@ -170,6 +273,15 @@ export default function Home() {
           onRegenerate={handleDangerRegenerate}
         />
       </section>
+
+      <HistoryList
+        history={history}
+        currentEntryId={currentEntryId}
+        onSelect={handleHistorySelect}
+        onToggleFavorite={handleHistoryToggleFavorite}
+        onRemove={handleHistoryRemove}
+        onClearAll={handleHistoryClearAll}
+      />
 
       {/* 편집 모드에서는 옵션·프리셋이 비활성화 — fieldset disabled 가 자식
           form 컨트롤(button/input/Switch/Slider) 전체를 자동 비활성화한다.

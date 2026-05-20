@@ -58,3 +58,29 @@ export interface Strength {
   /** 사람이 읽는 크랙 시간 (예: "3시간", "300년") */
   crackTimeDisplay: string;
 }
+
+/**
+ * 세션 비밀번호 히스토리 항목 (Stage 3, 2026-05-20).
+ *
+ * 메모리(React state)에만 보관한다. localStorage/sessionStorage/IndexedDB/
+ * cookie 등 영구 저장소 사용 금지 — 새로고침/탭 닫기 = 모두 소거.
+ * CLAUDE.md §🔒 보안 원칙 일관.
+ */
+export interface PasswordEntry {
+  /** 고유 식별자. `crypto.randomUUID()` 기반. */
+  id: string;
+  /** 표시용 #번호. 세션 동안 단조 증가하며 삭제해도 줄어들지 않음. */
+  index: number;
+  /** 비밀번호 자체 — 카드에 전체 표시 (사용자 결정 2026-05-20). */
+  value: string;
+  /** 생성 시각 (Date.now). 정렬·표시용. */
+  createdAt: number;
+  /** 길이 (코드포인트 단위). */
+  length: number;
+  /** zxcvbn 점수. 측정이 비동기라 완료 전엔 null. */
+  score: 0 | 1 | 2 | 3 | 4 | null;
+  /** 즐겨찾기 — 좌측 고정, 20개 한도 자동 삭제 면제. */
+  isFavorite: boolean;
+  /** 직접 편집으로 생성된 항목 (✏️ 라벨 표시용). */
+  isEdited: boolean;
+}

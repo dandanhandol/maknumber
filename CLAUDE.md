@@ -219,6 +219,23 @@ maknumber/
 - [x] README 로컬 실행 + 배포 안내 채움 (`npx serve out` / Vercel / Netlify /
       GitHub Pages / S3 등).
 
+### Phase 7 — Stage 3 세션 히스토리 (2026-05-20)
+- [x] `types/options.PasswordEntry` 타입 추가.
+- [x] `lib/history.ts` 헬퍼: `createEntry` / `prependEntry` / `pruneToLimit`
+      (20개 한도, 즐겨찾기 보존) / `toggleFavorite` / `removeEntry` /
+      `clearNonFavorite` / `updateScore`. 모두 순수 함수.
+- [x] `components/HistoryCard.tsx` — 카드 한 장. 비번 전체 표시(text-xs +
+      break-all), 강도 5칸 점, ⭐/X 액션, 편집됨 라벨, 현재 메인 ring 강조.
+- [x] `components/HistoryList.tsx` — 데스크톱 가로 스크롤(`sm:flex-row sm:overflow-x-auto`)
+      + 모바일 토글 세로 리스트(기본 접힘). 즐겨찾기 좌측 고정 + 일반 우측
+      최신순. ⓘ 안내 + "모두 지우기" (`window.confirm`).
+- [x] `app/page.tsx` history state + indexRef + skipNextHistoryRef +
+      nextEditedRef. pwd 변경 시 300ms 디바운스로 자동 추가, 카드 클릭은
+      swap 만(자동 추가 건너뛰기). 강도 측정은 entry 추가 직후 비동기로
+      `updateScore`.
+- [x] SPEC.md §7 (세션 히스토리) 추가. §8 비기능 요구사항으로 이동.
+- [x] 메모리 only — localStorage 등 영구 저장 0건 유지.
+
 ### Phase 6 — Stage 2 직접 편집 + 실시간 평가 (2026-05-20)
 - [x] `lib/evaluator.ts` 신규 — `getComposition` (즉시) + `getDangerMatches`
       (위임) + `getStrength` (위임). generator 의존성 없음.
@@ -286,6 +303,32 @@ maknumber/
 ---
 
 ## 📝 Decision Log
+
+### 2026-05-20 — 🌱 Stage 3: 세션 히스토리 (메모리 only)
+- **저장 정책**: 메모리(React state) 만. `localStorage` / `sessionStorage` /
+  `IndexedDB` / `cookie` 모두 금지. 새로고침 = 모두 소거. 보안 원칙 일관.
+- **`lib/history.ts` 분리**: 순수 헬퍼 함수만. generator 와 의존성 없음 —
+  향후 다른 생성 모드(한영 매핑 등)에서도 같은 인프라 재사용.
+- **자동 추가 디바운스 300ms**: 슬라이더 드래그 중 매 키프레임마다 entry
+  추가되어 폭증하는 것을 막는다. 디바운스가 끝난 후 가장 최신 항목과
+  `value` 가 같으면 중복 추가 방지.
+- **카드 클릭 swap vs 자동 추가 충돌**: 카드를 클릭하면 메인이 그 항목으로
+  바뀌어야 하는데 `setPwd(entry.value)` 가 다시 자동 추가 effect 를 트리거.
+  `skipNextHistoryRef` 플래그로 한 번 건너뜀.
+- **편집 완료 → isEdited 표시**: 같은 디바운스 추가 경로를 타되 `nextEditedRef`
+  ref 로 한 번만 `isEdited=true`. 일관된 코드 경로.
+- **카드 비번 전체 표시**: 사용자 결정으로 마스킹 폐기. 과거 비번을 다시
+  선택하려면 전체가 보여야 의미 있다는 지적. `text-xs` + `break-all` 로 자동
+  wrap, 카드 폭 `w-56` 고정·height 자동.
+- **즐겨찾기 한도 면역**: `HISTORY_LIMIT(20)` 초과 시 비-즐겨찾기부터 잘라냄.
+  즐겨찾기만 20개 넘는 극단적 케이스는 그대로 두고 사용자가 정리하도록.
+- **"모두 지우기" `window.confirm`**: 추가 dependency 없는 네이티브 다이얼로그.
+  비-즐겨찾기만 삭제(즐겨찾기는 별도 X 버튼으로 의식적으로 해제 필요).
+- **모바일 토글 기본 접힘**: 옵션 카드 토글과 일관. 공간 절약.
+- **HTML 표준**: 헤더의 토글 button 안에 Info button 중첩 발견 → 분리.
+  flex 컨테이너 안 두 형제 button 으로.
+- **id 생성**: `crypto.randomUUID()` 사용. 비번 자체가 아닌 식별자라 `lib/random.ts`
+  단일 출입구 우회 OK. Math.random 금지 원칙은 비밀번호 난수에만 적용.
 
 ### 2026-05-20 — 🐛 편집 모드 한글 입력 차단 (Stage 2 후속 픽스)
 - **증상**: 편집 모드 input 이 한글 입력을 그대로 받아 비번에 한글 섞임.
