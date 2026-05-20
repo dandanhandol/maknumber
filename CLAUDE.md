@@ -304,6 +304,22 @@ maknumber/
 
 ## 📝 Decision Log
 
+### 2026-05-20 — 🔄 개발 워크플로우 합의
+**라이브 확인은 로컬 dev server, push는 OK된 변경만.**
+
+흐름:
+1. 사용자가 한 터미널에 `npm run dev` 띄워두기 (`http://localhost:3000`).
+2. AI 가 파일 수정 → Turbopack HMR 로 브라우저 자동 갱신(새로고침조차 보통
+   불필요).
+3. 사용자가 화면에서 OK 신호 → AI 가 `git commit` + `git push`.
+4. Vercel 이 push 감지 → 자동 빌드 1~2분 → `maknumber.vercel.app` 갱신.
+
+원칙:
+- **production(vercel.app) 은 HMR 없음.** push 전엔 라이브 반영 안 됨.
+- AI 가 검증용으로 별도 `npm run dev` 띄우지 않음(포트 충돌 + 사용자 흐름
+  방해). 검증은 `typecheck + lint + npm run build` 까지만.
+- 빌드 산출물 `out/` 은 `.gitignore` 라 push 안 됨 — Vercel 이 직접 빌드.
+
 ### 2026-05-20 — 🌱 Stage 3: 세션 히스토리 (메모리 only)
 - **저장 정책**: 메모리(React state) 만. `localStorage` / `sessionStorage` /
   `IndexedDB` / `cookie` 모두 금지. 새로고침 = 모두 소거. 보안 원칙 일관.
