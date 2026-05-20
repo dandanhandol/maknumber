@@ -240,7 +240,7 @@ export default function Home() {
   }, [history, currentEntryId]);
 
   return (
-    <main className="container mx-auto max-w-2xl px-4 py-6 sm:py-14 space-y-5 sm:space-y-7">
+    <main className="container mx-auto max-w-2xl px-4 py-6 sm:py-14 space-y-7 sm:space-y-9">
       <header className="flex items-center gap-2.5 sm:gap-3 pb-1">
         <div className="size-9 sm:size-10 rounded-xl bg-foreground text-background flex items-center justify-center shadow-sm shrink-0">
           <Lock className="size-[18px] sm:size-5" strokeWidth={2.25} />
@@ -274,35 +274,29 @@ export default function Home() {
         />
       </section>
 
-      <HistoryList
-        history={history}
-        currentEntryId={currentEntryId}
-        onSelect={handleHistorySelect}
-        onToggleFavorite={handleHistoryToggleFavorite}
-        onRemove={handleHistoryRemove}
-        onClearAll={handleHistoryClearAll}
-      />
+      {/* 프리셋 칩 — 옵션 카드 밖 단독 행 (2026-05-20: 시각 무게 분리).
+          편집 중에는 dim 처리 + pointer-events 차단. */}
+      <div
+        className={
+          "transition-opacity " +
+          (editing ? "opacity-50 pointer-events-none" : "")
+        }
+      >
+        <PresetSelector presetId={presetId} onSelect={handlePreset} />
+      </div>
 
-      {/* 편집 모드에서는 옵션·프리셋이 비활성화 — fieldset disabled 가 자식
-          form 컨트롤(button/input/Switch/Slider) 전체를 자동 비활성화한다.
-          사용자 결정(2026-05-20): 편집 중 옵션 변경 → 자동 재생성 → 편집
-          손실 문제를 단순화로 해결. */}
+      {/* 옵션 카드 — 프리셋 분리 후 토글+본문만 남음.
+          편집 모드에서는 fieldset disabled 로 자식 form 컨트롤 일괄 비활성화. */}
       <fieldset
         disabled={editing}
         className="rounded-2xl border bg-card/40 backdrop-blur-sm m-0 p-0 transition-opacity disabled:opacity-50"
       >
-        {/* 프리셋 칩 — 옵션 카드 안 맨 위 줄(2026-05-19: Stage 1.3). */}
-        <div className="p-5 sm:p-6">
-          <PresetSelector presetId={presetId} onSelect={handlePreset} />
-        </div>
-
-        {/* 옵션 본문 토글. 기본은 펼침 — Stage 1.3/1.4 결정. */}
         <button
           type="button"
           onClick={() => setOptionsOpen((o) => !o)}
           aria-expanded={optionsOpen}
           aria-controls="options-body"
-          className="w-full flex items-center justify-between gap-3 border-t px-5 sm:px-6 py-3.5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
+          className="w-full flex items-center justify-between gap-3 px-5 sm:px-6 py-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
         >
           <span>{optionsOpen ? "옵션 접기" : "옵션 자세히"}</span>
           <ChevronDown
@@ -322,6 +316,20 @@ export default function Home() {
           </div>
         )}
       </fieldset>
+
+      {/* 옵션 카드의 강한 보더 다음 보더 없는 텍스트(히스토리 헤더)가 시각적
+          으로 더 가깝게 인식되는 효과 보정. main 의 space-y 외에 wrapper 의
+          pt 로 다른 영역의 약 2배 간격 확보. */}
+      <div className="pt-7 sm:pt-9">
+        <HistoryList
+          history={history}
+          currentEntryId={currentEntryId}
+          onSelect={handleHistorySelect}
+          onToggleFavorite={handleHistoryToggleFavorite}
+          onRemove={handleHistoryRemove}
+          onClearAll={handleHistoryClearAll}
+        />
+      </div>
 
       <footer className="pt-2 space-y-1.5 text-xs leading-relaxed">
         <div className="flex items-center gap-2 text-foreground/80 font-medium">
