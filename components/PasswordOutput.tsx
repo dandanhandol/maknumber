@@ -194,15 +194,25 @@ function EditPanel({
       <input
         type="text"
         value={draft}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          // ASCII 인쇄 가능 범위(0x20–0x7E)만 허용. generator 가 만들 수 있는
+          // 문자 풀과 일치. 한글/이모지/제어문자는 즉시 제거되어 사용자에게는
+          // "입력이 무시됨"으로 보임 — 한/영 전환을 즉시 인지하도록.
+          const filtered = e.target.value.replace(/[^\x20-\x7E]/g, "");
+          onChange(filtered);
+        }}
         onKeyDown={handleKeyDown}
         autoFocus
         maxLength={MAX_LENGTH}
+        // IME 비활성화 시도: lang/inputMode 힌트(브라우저별 효과 차이 있음).
+        // 실패해도 위 onChange 필터로 최종 차단됨.
+        lang="en"
+        inputMode="text"
         spellCheck={false}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
-        aria-label="비밀번호 편집"
+        aria-label="비밀번호 편집 (ASCII만)"
         className="font-mono text-3xl sm:text-5xl break-all leading-[1.15] font-semibold tracking-tight bg-transparent border-0 outline-none w-full p-0 min-h-[2.25rem] sm:min-h-[3rem]"
       />
       <div className="mt-3 flex items-center gap-x-3 gap-y-1 flex-wrap text-xs">

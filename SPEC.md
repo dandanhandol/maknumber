@@ -256,8 +256,13 @@ description, options: PasswordOptions }` 형태.
 ### 6.2 편집 모드 UI
 
 - 비번 박스가 `<input>` 으로 전환. 한 줄 입력(`type="text"`,
-  `inputMode="text"`, `spellCheck=false`, `autoCorrect=off`,
+  `inputMode="text"`, `lang="en"`, `spellCheck=false`, `autoCorrect=off`,
   `autoCapitalize=off`).
+- **입력 가능 문자 = ASCII 인쇄 가능 범위(0x20–0x7E)만**. 한글·이모지·
+  제어문자 등은 `onChange` 단계에서 정규식 `/[^\x20-\x7E]/g` 로 즉시 제거.
+  generator 가 만들 수 있는 문자 풀과 일치하며, 한글 비번을 거부하는 대부분의
+  한국 사이트와의 호환성도 보장. 사용자에게는 "한/영 전환 안 했네"가 즉시
+  인지된다.
 - 박스 보더가 살짝 강조됨(`border-foreground/40 + shadow-md`).
 - 박스 아래 행에 실시간 통계:
   - `12/64` 길이 카운터 (코드포인트 단위)
