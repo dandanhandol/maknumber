@@ -219,6 +219,19 @@ maknumber/
 - [x] README 로컬 실행 + 배포 안내 채움 (`npx serve out` / Vercel / Netlify /
       GitHub Pages / S3 등).
 
+### Phase 6 — Stage 2 직접 편집 + 실시간 평가 (2026-05-20)
+- [x] `lib/evaluator.ts` 신규 — `getComposition` (즉시) + `getDangerMatches`
+      (위임) + `getStrength` (위임). generator 의존성 없음.
+- [x] PasswordOutput 편집 모드 (✏️ 진입 / input / 카운터 / 구성 / ✓ 완료 / ↩
+      되돌리기 / Enter 단축키).
+- [x] page.tsx editing·draft state, evalTarget 단일화, 강도 150ms·위험
+      200ms 디바운스.
+- [x] 편집 중 옵션·프리셋 비활성화 (`<fieldset disabled>`) — 자동 재생성
+      손실 방지.
+- [x] 편집 박스 보더 강조 + shadow-md 트랜지션.
+- [x] "사용 불가 (최소 4자)" 표시 + ✓ 완료 비활성화.
+- [x] SPEC.md §6 (직접 편집) 추가.
+
 ### Phase 5 — 출시 + 출시 후 폴리시 (2026-05-19 신규)
 - [x] **🚀 v1.0 출시** — https://maknumber.vercel.app (Vercel + GitHub).
 - [x] GitHub 저장소 public 전환 (보안 도구 신뢰성 ↑).
@@ -273,6 +286,32 @@ maknumber/
 ---
 
 ## 📝 Decision Log
+
+### 2026-05-20 — 🌱 Stage 2: 비밀번호 직접 편집 + 실시간 평가
+- **신규 `lib/evaluator.ts`**: 임의 문자열을 받는 평가 진입점. 향후 다른
+  비번 생성 모드(한영 매핑 등)에서도 재사용 가능하도록 `generator` 와
+  의존성 끊음. composition 만 새로 정의하고 strength·dangerPatterns 는
+  기존 모듈에 위임.
+- **편집 트리거**: 비번 박스 우측 상단 `✏️` 아이콘 (와이어프레임 그대로).
+  버튼 옆 추가가 아니라 박스 자체의 affordance — 시각 무게 분산 없음.
+- **input vs textarea**: `<input>` 채택. 64자가 모바일에서 가로 스크롤
+  가능성 있지만 한 줄 입력이 일관성·Enter 단축키·자동 키패드 측면에서
+  더 자연스러움.
+- **"사용 불가" 기준**: `length < MIN_LENGTH(4)` 일 때. generator 의
+  normalize 와 일관. ✓ 완료 버튼 비활성화 + 빨간 라벨.
+- **편집 중 옵션 처리**: `<fieldset disabled>` 한 줄로 모든 자식 form 컨트롤
+  (button/input/Switch/Slider) 비활성화. 옵션 컴포넌트 각각에 disabled prop
+  추가하는 것보다 깔끔.
+- **디바운스**: 강도 150ms / 위험 200ms / composition 즉시. 사용자 명세
+  그대로. setState 는 setTimeout 콜백 안이라 React 19 set-state-in-effect
+  룰 안전.
+- **평가 대상 단일화**: `evalTarget = editing ? draft : pwd`. 편집 진입·
+  종료 시 디바운스 effect 가 자동으로 새 대상으로 전환됨 → 별도 분기 없음.
+- **위험 배너 "새로 만들기" 충돌**: 편집 중 누르면 편집을 폐기하고 새 비번
+  생성. 사용자 명시 의도로 가정. 향후 확인 다이얼로그 검토(SPEC §6.5).
+- **`measureStrength` / `findDangerPatterns` → `getStrength` /
+  `getDangerMatches`**: 호출 사이트(page.tsx)만 evaluator 로 교체. 기존
+  모듈은 그대로 유지(재사용성).
 
 ### 2026-05-19 — 🐛 모바일 실기기 버그 2종 수정
 사용자가 라이브 환경에서 추가로 발견한 2개 버그를 정리·수정.

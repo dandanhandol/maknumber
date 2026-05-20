@@ -6,10 +6,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, Lock, ShieldCheck } from "lucide-react";
 import type { PasswordOptions, Strength } from "@/types/options";
+import { MIN_LENGTH } from "@/types/options";
 import { DEFAULT_PRESET_ID, getPreset } from "@/lib/presets";
 import { generate, normalizeOptions } from "@/lib/generator";
-import { findDangerPatterns } from "@/lib/dangerPatterns";
-import { measureStrength } from "@/lib/strength";
+import {
+  getDangerMatches,
+  getStrength,
+} from "@/lib/evaluator";
 import { PresetSelector } from "@/components/PresetSelector";
 import { PasswordOptionsForm } from "@/components/PasswordOptions";
 import { PasswordOutput } from "@/components/PasswordOutput";
@@ -30,6 +33,31 @@ export default function Home() {
   // 강조할 수 있다.
   const [optionsOpen, setOptionsOpen] = useState(true);
 
+  // 편집 모드 — Stage 2 (2026-05-20).
+  // draft 는 편집 중 문자열, originalBeforeEdit 은 "되돌리기" 용.
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<string>("");
+
+  // 평가 대상: 편집 중에는 draft, 아니면 pwd. 편집/되돌리기 사이의 자연스러운
+  // 전환을 위해 단일 변수로 통일.
+  const evalTarget = editing ? draft : pwd;
+
+  // 위험 패턴 디바운스(200ms) — 편집 중 매 키스트로크마다 배너가 깜빡이는
+  // 것을 막는다. dangerPatterns 자체는 가벼우나 UI 안정성 우선.
+  const [debouncedDangerTarget, setDebouncedDangerTarget] = useState<string>(
+    "",
+  );
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedDangerTarget(evalTarget);
+    }, 200);
+    return () => clearTimeout(handle);
+  }, [evalTarget]);
+  const danger = useMemo(
+    () => getDangerMatches(debouncedDangerTarget),
+    [debouncedDangerTarget],
+  );
+
   // opts와 pwd를 같은 호출에서 함께 갱신해 effect 안의 setState를 피한다
   // (React 19 권장 패턴: setState-in-effect 룰).
   const applyOpts = useCallback((next: PasswordOptions) => {
@@ -49,17 +77,15 @@ export default function Home() {
     setPwd(generate(INITIAL_OPTIONS));
   }, []);
 
-  // 강도는 비동기(zxcvbn 동적 import). 입력 빠른 변경 시 디바운스.
-  // setState는 setTimeout 콜백 안에서 일어나므로 룰에 걸리지 않는다.
+  // 강도는 비동기(zxcvbn 동적 import). 입력 빠른 변경 시 150ms 디바운스
+  // (SPEC: 편집 중 실시간 평가). setState 는 setTimeout 콜백 안이라 룰 안전.
   useEffect(() => {
-    if (!pwd) return;
+    if (!evalTarget) return;
     const handle = setTimeout(() => {
-      measureStrength(pwd).then(setStrength);
-    }, 120);
+      getStrength(evalTarget).then(setStrength);
+    }, 150);
     return () => clearTimeout(handle);
-  }, [pwd]);
-
-  const danger = useMemo(() => findDangerPatterns(pwd), [pwd]);
+  }, [evalTarget]);
 
   const handlePreset = (id: string) => {
     const p = getPreset(id);
@@ -73,6 +99,42 @@ export default function Home() {
     setPresetId(null);
     applyOpts(normalizeOptions(next));
   };
+
+  // ─── 편집 모드 핸들러 ──────────────────────────────────────────
+  const handleEditStart = useCallback(() => {
+    if (!pwd) return;
+    setDraft(pwd);
+    setEditing(true);
+  }, [pwd]);
+
+  const handleEditChange = useCallback((next: string) => {
+    setDraft(next);
+  }, []);
+
+  const handleEditCommit = useCallback(() => {
+    if (Array.from(draft).length < MIN_LENGTH) return; // 안전망
+    setPwd(draft);
+    setEditing(false);
+    // 편집된 비번은 어떤 프리셋과도 매칭되지 않으므로 강조 해제.
+    setPresetId(null);
+  }, [draft]);
+
+  const handleEditRevert = useCallback(() => {
+    setDraft("");
+    setEditing(false);
+  }, []);
+
+  // DangerWarning 의 "새로 만들기" — 편집 중이라도 사용자가 명시적으로 누르면
+  // 편집을 폐기하고 새 비번 생성. 무심코 누르는 사고를 막기 위해 PasswordOutput
+  // 의 view 액션은 별도(regenerate) 로 분리되어 있고, 이 함수는 위험 배너
+  // 트리거에서만 사용된다.
+  const handleDangerRegenerate = useCallback(() => {
+    if (editing) {
+      setEditing(false);
+      setDraft("");
+    }
+    setPwd(generate(opts));
+  }, [editing, opts]);
 
   return (
     <main className="container mx-auto max-w-2xl px-4 py-6 sm:py-14 space-y-5 sm:space-y-7">
@@ -92,18 +154,37 @@ export default function Home() {
       </header>
 
       <section className="space-y-3">
-        <PasswordOutput pwd={pwd} onRegenerate={regenerate} />
+        <PasswordOutput
+          pwd={pwd}
+          editing={editing}
+          draft={draft}
+          onEditStart={handleEditStart}
+          onEditChange={handleEditChange}
+          onEditCommit={handleEditCommit}
+          onEditRevert={handleEditRevert}
+          onRegenerate={regenerate}
+        />
         <StrengthMeter strength={strength} />
-        <DangerWarning matches={danger} onRegenerate={regenerate} />
+        <DangerWarning
+          matches={danger}
+          onRegenerate={handleDangerRegenerate}
+        />
       </section>
 
-      <section className="rounded-2xl border bg-card/40 backdrop-blur-sm">
+      {/* 편집 모드에서는 옵션·프리셋이 비활성화 — fieldset disabled 가 자식
+          form 컨트롤(button/input/Switch/Slider) 전체를 자동 비활성화한다.
+          사용자 결정(2026-05-20): 편집 중 옵션 변경 → 자동 재생성 → 편집
+          손실 문제를 단순화로 해결. */}
+      <fieldset
+        disabled={editing}
+        className="rounded-2xl border bg-card/40 backdrop-blur-sm m-0 p-0 transition-opacity disabled:opacity-50"
+      >
         {/* 프리셋 칩 — 옵션 카드 안 맨 위 줄(2026-05-19: Stage 1.3). */}
         <div className="p-5 sm:p-6">
           <PresetSelector presetId={presetId} onSelect={handlePreset} />
         </div>
 
-        {/* 옵션 본문 토글. 기본은 접힘 — Stage 1.3 결정. */}
+        {/* 옵션 본문 토글. 기본은 펼침 — Stage 1.3/1.4 결정. */}
         <button
           type="button"
           onClick={() => setOptionsOpen((o) => !o)}
@@ -128,7 +209,7 @@ export default function Home() {
             <PasswordOptionsForm opts={opts} onChange={handleOptsChange} />
           </div>
         )}
-      </section>
+      </fieldset>
 
       <footer className="border-t pt-5 space-y-1.5 text-xs leading-relaxed">
         <div className="flex items-center gap-2 text-foreground/80 font-medium">
