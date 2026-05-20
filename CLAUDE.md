@@ -266,28 +266,37 @@ maknumber/
 
 ## ➡️ 다음 작업 우선순위
 
-**전체 로드맵 (2026-05-19 출시 후 갱신):**
+**전체 로드맵 (2026-05-20 종료 시점):**
 
 ```
-1. Stage 1.x           ✅ 완료
-2. Phase 4 마감        ✅ 완료
-3. 출시                ✅ 완료 — https://maknumber.vercel.app
-4. 출시 후 폴리시       ✅ 완료 (라이선스/favicon/robots/sitemap/OG 메타/OG 이미지/슬로건/라이트 톤/저장소 public 전환)
-5. (모니터링)          🚧 진행 중 — 사용자 피드백 수집 후 Stage 2/3 결정
+1. Stage 1.x               ✅ 완료
+2. Phase 4 마감            ✅ 완료
+3. 출시                    ✅ 완료 — https://maknumber.vercel.app
+4. 출시 후 폴리시          ✅ 완료
+5. 모바일 폴리시 1차       ✅ 완료 (폰트·패딩·터치영역·길이입력 버그·슬라이더 핸들·한글차단)
+6. Stage 2 (편집·평가)     ✅ 완료
+7. Stage 3 (히스토리)      ✅ 완료
+8. UI 균형 조정            ✅ 완료 (프리셋 분리·간격 균형·UI 측정 학습)
+9. 모니터링                🚧 진행 중
 ```
 
-**1순위: 출시 후 모니터링 (행동 없는 단계)**
+**1순위: 모니터링 단계 (행동 없는 단계)**
 
 - 코드/문서 변경 없음. **친구·동료에게 URL 공유하고 실사용 피드백 누적**.
-- 피드백이 모이기 전엔 추가 기능 보류. "1회용 도구"의 단순함 유지가 핵심
-  정체성.
-- 잠재 후속 — 피드백이 강하게 요구하면 그때:
-  - Stage 2 (편집·실시간 평가, `lib/evaluator.ts` 분리) — 약 1일
-  - Stage 3 (세션 히스토리, 메모리 only) — 약 1일
-- Vercel Production Checklist의 **Web Analytics / Speed Insights는 절대
-  켜지 말 것** — 푸터의 "추적 없음" 약속 위반. `default-src 'self'` CSP
-  단순성도 깨짐.
-- 다음 채팅에서 사용자가 새 작업을 가져오기 전까지 우리는 멈춤 상태.
+- 피드백 없이 추가 기능 만들지 말 것. "1회용 도구" 단순함이 정체성.
+
+**남아 있을 수 있는 잠재 작업** (피드백·요청이 강하게 오면 그때):
+- 모바일 🌱 7~9 보류 항목 — 햅틱 피드백 / JetBrains Mono / iOS Safe Area
+- "찐번호" 한영 매핑 모드 — 사용자 피드백 문서 Phase 2 언급. evaluator/
+  history 인프라가 이미 모드 무관 분리되어 있어 도입 가능.
+- "모두 지우기" 확인 다이얼로그를 shadcn AlertDialog 로 (현재 window.confirm)
+- HistoryCard 비번 영역 hover 시 강조 또는 클릭 가능 표시 강화
+
+**경고/지속 원칙:**
+- Vercel Production Checklist 의 **Web Analytics / Speed Insights 는 절대
+  켜지 말 것** — 푸터 "추적 없음" 약속 위반.
+- UI 미세 조정 시 **사용자 실측을 신뢰** — Decision Log 2026-05-20 측정 학습
+  참조. AI 의 이론값/스크린샷 픽셀 측정은 빗나갈 수 있다.
 
 **주의:**
 - Next.js 16은 14/15와 breaking changes 있음. 새 API 쓰기 전에 AGENTS.md가
