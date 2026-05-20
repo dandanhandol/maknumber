@@ -323,7 +323,7 @@ export default function Home() {
         )}
       </fieldset>
 
-      <footer className="border-t pt-5 space-y-1.5 text-xs leading-relaxed">
+      <footer className="pt-2 space-y-1.5 text-xs leading-relaxed">
         <div className="flex items-center gap-2 text-foreground/80 font-medium">
           <ShieldCheck className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-500" />
           100% 브라우저에서 생성됩니다
